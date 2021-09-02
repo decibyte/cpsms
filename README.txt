@@ -1,5 +1,5 @@
 THIS IS
-A Python wrapper around the SMS gateway from CPSMS <https://www.cpsms.dk/>.
+A Python 3 wrapper around the SMS gateway from CPSMS <https://www.cpsms.dk/>.
 
 THIS IS NOT
 Some sort of magic, free SMS gateway.

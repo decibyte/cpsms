@@ -1,8 +1,5 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-'
-
 """
-Copyright 2010, 2011 Mikkel Munch Mortensen <3xm@detfalskested.dk>.
+Copyright 2010-2021 Mikkel Munch Mortensen <3xm@detfalskested.dk>.
 
 This file is part of SMS Gateway.
 
@@ -23,13 +20,18 @@ along with SMS Gateway.  If not, see <http://www.gnu.org/licenses/>.
 import cpsms
 
 # The easiest way to send a single message.
-gateway1 = cpsms.Gateway('username', 'password', 'SMS Test')
-gateway1.add_recipient('+4512345678')
-print gateway1.send(u'One way of sending a massage.')
+gateway1 = cpsms.Gateway("username", "password", "Sender Name")
+gateway1.add_recipient("+4512345678")
+print(gateway1.send("One way of sending a massage."))
 
 # The easiest way to send a message to multiple recipients.
-gateway2 = cpsms.Gateway('username', 'password', 'SMS Test', {
-	'recipients' : ['+4512345678', '+4587654321'],
-	'message' : u'Another way of sending a message.',
-})
-print gateway2.send()
+gateway2 = cpsms.Gateway(
+    "username",
+    "password",
+    "SMS Test",
+    {
+        "recipients": ["+4512345678", "+4587654321"],
+        "message": "Another way of sending a message.",
+    },
+)
+print(gateway2.send())
