@@ -19,19 +19,14 @@ along with SMS Gateway.  If not, see <http://www.gnu.org/licenses/>.
 
 import cpsms
 
-# The easiest way to send a single message.
-gateway1 = cpsms.Gateway("username", "password", "Sender Name")
-gateway1.add_recipient("+4512345678")
-print(gateway1.send("One way of sending a massage."))
 
-# The easiest way to send a message to multiple recipients.
-gateway2 = cpsms.Gateway(
-    "username",
-    "password",
-    "SMS Test",
-    {
-        "recipients": ["+4512345678", "+4587654321"],
-        "message": "Another way of sending a message.",
-    },
-)
-print(gateway2.send())
+# This will send text messages to Bob and Carol respectively. On their
+# devices, the sender will shown as "Alice".
+
+gateway = cpsms.Gateway("username", "password", "Alice")
+gateway.send("4512345678", "Hello Bob")
+gateway.send("4587654321", "Hello Carol")
+
+# The `.send()` method will return the response from the SMS gateway. Have a
+# look at the CPSMS documentation to see what responses look like:
+# <https://api.cpsms.dk/documentation/index.html#send>

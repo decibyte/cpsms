@@ -17,9 +17,11 @@ You should have received a copy of the GNU General Public License
 along with SMS Gateway.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import base64
 import getopt
-from urllib.parse import urlencode
-from urllib.request import urlopen
+import json
+import re
+from urllib import error, parse, request
 from typing import Any, Tuple
 
 
@@ -31,18 +33,23 @@ class Gateway:
     """
 
     options: dict[str, Any] = {}
+    username: str
+    password: str
+    gateway_url: str = "https://api.cpsms.dk/v2/send"
 
     @property
     def default_options(self) -> dict[str, Any]:
+        """Get some default options to use."""
         return {
-            "recipients": [],
+            "to": "",
             "message": "",
-            "callback_url": "",
-            "timestamp": "",  # For delaying messages. Format: YYYYMMDDHHMM.
-            "utf8": True,
+            "from": "",
+            "timestamp": "",  # For delaying messages. Format: Unix timestamp.
+            "encoding": "UTF-8",
+            "dlr_url": "",
             "flash": False,
-            "group": False,
-            "gateway_base_url": "https://www.cpsms.dk/sms/?",
+            "reference": "",
+            "format": "GSM",
         }
 
     def __init__(
@@ -51,71 +58,72 @@ class Gateway:
         password: str,
         sender_name: str,
         options: dict[str, Any] = None,
+        gateway_url: str = None,
     ) -> None:
-        """Initialize SMS gateway, with some options."""
+        """Initialize SMS gateway."""
+        self.username = username
+        self.password = password
+
         self.options = self.default_options
+        self.options["from"] = sender_name
+
         if options is not None:
             self.options.update(options)
 
-        self.options["username"] = username
-        self.options["password"] = password
-        self.options["from"] = sender_name
+        if gateway_url:
+            self.gateway_url = gateway_url
 
-    def add_recipient(self, number: str) -> None:
-        """Add a number to the list of recipients."""
-        self.options["recipients"].append(number)
-
-    def send(self, message: str = None) -> Tuple[bool, str]:
+    def send(self, to: str = None, message: str = None) -> Tuple[bool, str]:
         """
-        Send the message specified in self.options to all recipients.
+        Send a message to a recipient.
 
-        Optionally, override the message to be sent.
+        Optionally, override the recpient and the message to be sent.
         """
-        # Decide what to send.
-        if message is None:
-            message = self.options["message"]
+        # Raise an error if the sender is not specified.
+        if not self.options["from"]:
+            raise ValueError("Sender name cannot be empty.")
+        # Update message if specified.
+        if message is not None:
+            self.options["message"] = message
 
         # Raise error if message is empty.
-        if message == "":
-            raise ValueError("Message empty.")
+        if not self.options["message"]:
+            raise ValueError("Message cannot be empty.")
 
         # Raise error if message is too long.
-        if len(message) > 459:
+        if len(self.options["message"]) > 459:
             raise ValueError(
                 "Message not allowed to be more than 459 characters."
-                "Current message is %i characters." % len(message)
+                "Current message is %i characters."
+                % len(self.options["message"])
             )
 
+        # Update recipient if specified.
+        if to is not None:
+            self.options["to"] = to
+
         # Raise error if recipients is empty.
-        if len(self.options["recipients"]) == 0:
-            raise ValueError("No recipients.")
+        if not self.options["to"]:
+            raise ValueError("No recipient is set.")
 
-        # Construct gateway URL.
-        options = [
-            ("username", self.options["username"]),
-            ("password", self.options["password"]),
-            ("message", message),
-            ("from", self.options["from"]),
-            ("utf8", int(self.options["utf8"])),
-            ("flash", int(self.options["flash"])),
-            ("group", int(self.options["group"])),
-            ("url", self.options["callback_url"]),
-        ]
+        # Raise error if recipient is not a number.
+        pattern = re.compile("^[1-9]+$")
+        if pattern.match(self.options["to"]) is None:
+            raise ValueError("Recipient number must be numbers only (no characters, spaces or +)")
 
-        for r in self.options["recipients"]:
-            options.append(("recipient[]", r))
+        # Prepare the data to send along.
+        data = self.options
+        data["flash"] = int(data["flash"])
+        data = json.dumps(data).encode()
 
-        if self.options["timestamp"] != "":
-            options.append(("timestamp", self.options["timestamp"]))
+        # Prepare authentication.
+        auth_header = "{}:{}".format(self.username, self.password)
+        auth_header = base64.b64encode(auth_header.encode()).decode()
 
-        url = self.options["gateway_base_url"] + urlencode(options)
-        print(url)
+        http_request = request.Request(self.gateway_url, data=data)
+        http_request.add_header(
+            "Authorization", "Basic {}".format(auth_header)
+        )
+        response = request.urlopen(http_request)
 
-        # Send SMS.
-        remote_call = urlopen(url)
-        result = remote_call.read().decode()
-        remote_call.close()
-        if result.find("<succes>") > -1:
-            return True, result
-        else:
-            return False, result
+        return json.loads(response.read().decode())
