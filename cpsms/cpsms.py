@@ -38,7 +38,7 @@ class Gateway:
     gateway_url: str = "https://api.cpsms.dk/v2/send"
 
     @property
-    def default_options(self) -> dict[str, Any]:
+    def default_options(self) -> Dict[str, Any]:
         """Get some default options to use."""
         return {
             "to": "",
@@ -57,7 +57,7 @@ class Gateway:
         username: str,
         password: str,
         sender_name: str,
-        options: dict[str, Any] = None,
+        options: Dict[str, Any] = None,
         gateway_url: str = None,
     ) -> None:
         """Initialize SMS gateway."""
