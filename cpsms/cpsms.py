@@ -22,7 +22,7 @@ import getopt
 import json
 import re
 from urllib import error, parse, request
-from typing import Any, Tuple
+from typing import Any, Dict, Tuple
 
 
 class Gateway:
@@ -32,7 +32,7 @@ class Gateway:
     Please look at the README for further description.
     """
 
-    options: dict[str, Any] = {}
+    options: Dict[str, Any] = {}
     username: str
     password: str
     gateway_url: str = "https://api.cpsms.dk/v2/send"
@@ -109,12 +109,14 @@ class Gateway:
         # Raise error if recipient is not a number.
         pattern = re.compile("^[1-9]+$")
         if pattern.match(self.options["to"]) is None:
-            raise ValueError("Recipient number must be numbers only (no characters, spaces or +)")
+            raise ValueError(
+                "Recipient number must be numbers only (no characters, spaces or +)"
+            )
 
         # Prepare the data to send along.
-        data = self.options
-        data["flash"] = int(data["flash"])
-        data = json.dumps(data).encode()
+        options = self.options
+        options["flash"] = int(options["flash"])
+        data = json.dumps(options).encode()
 
         # Prepare authentication.
         auth_header = "{}:{}".format(self.username, self.password)
