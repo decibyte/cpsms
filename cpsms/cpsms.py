@@ -107,7 +107,7 @@ class Gateway:
             raise ValueError("No recipient is set.")
 
         # Raise error if recipient is not a number.
-        pattern = re.compile("^[1-9]+$")
+        pattern = re.compile("^[0-9]+$")
         if pattern.match(self.options["to"]) is None:
             raise ValueError(
                 "Recipient number must be numbers only (no characters, spaces or +)"
